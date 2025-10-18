@@ -66,8 +66,7 @@ class PhotoCollectionView extends StatelessWidget {
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         shrinkWrap: true,
-        // Increase cacheExtent so widget tests construct every tile eagerly.
-        cacheExtent: 10000,
+        cacheExtent: 50000, // Increase cacheExtent
         padding: const EdgeInsets.all(AppSpacingLarge),
         itemCount: children.length,
         itemBuilder: (context, index) => children[index],
@@ -82,6 +81,7 @@ class PhotoCollectionView extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: CustomScrollView(
+        cacheExtent: 50000, // Increase cacheExtent
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           ..._buildHeaderSlivers(),
@@ -135,6 +135,7 @@ class PhotoCollectionView extends StatelessWidget {
     return photos
         .map(
           (photo) => PhotoListTile(
+            key: ValueKey(photo.id),
             photo: photo,
             isFavorite: isFavorite(photo),
             isSelectionMode: isSelectionMode,

@@ -66,6 +66,7 @@ class PhotoLocalDataSource {
   }) async {
     final cacheDirectory = await _ensureCacheDirectory();
     final stored = <Photo>[];
+    final downloadFutures = <Future<void>>[];
 
     for (final photo in photos) {
       final fileName = _buildFileName(photo);
@@ -77,11 +78,12 @@ class PhotoLocalDataSource {
       }
 
       if (!await file.exists()) {
-        await _downloadImage(photo.url, file);
+        downloadFutures.add(_downloadImage(photo.url, file));
       }
-
       stored.add(photo.copyWith(localImagePath: filePath));
     }
+
+    await Future.wait(downloadFutures);
 
     await _writeMetadata(stored);
     return stored;

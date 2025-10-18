@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../data/photo.dart';
@@ -168,22 +167,43 @@ class PhotoListTile extends StatelessWidget {
 
   Widget _buildImage() {
     final localPath = photo.localImagePath;
-    if (localPath != null && localPath.isNotEmpty) {
-      final file = File(localPath);
-      if (file.existsSync()) {
-        return Image.file(
-          file,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _errorPlaceholder(),
-        );
-      }
+    final ImageProvider imageProvider;
+
+    if (localPath != null && File(localPath).existsSync()) {
+      imageProvider = FileImage(File(localPath));
+    } else {
+      imageProvider = NetworkImage(photo.url);
     }
-    return CachedNetworkImage(
-      imageUrl: photo.url,
+
+    return Image( // Use Image.file or Image.network with loadingBuilder
+      image: imageProvider,
       fit: BoxFit.cover,
-      placeholder:
-          (context, url) => const Center(child: CircularProgressIndicator()),
-      errorWidget: (context, url, error) => _errorPlaceholder(),
+      errorBuilder: (context, error, stackTrace) => _errorPlaceholder(),
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            child, // Show the image beneath the loading indicator
+            Center(
+              child: SizedBox(
+                height: AppCircularProgressIndicatorSize,
+                width: AppCircularProgressIndicatorSize,
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                      : null,
+                  strokeWidth: AppStrokeWidthMedium,
+                  color: Colors.white,
+                  backgroundColor: Colors.black54,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

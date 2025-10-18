@@ -30,6 +30,7 @@ class PhotoState extends Equatable {
     this.isSelectionMode = false,
     this.selectedPhotoIds = const <String>{},
     this.downloadingPhotoIds = const <String>{},
+    this.sortOrder = PhotoSortOrder.descending,
   });
 
   final PhotoStatus status;
@@ -53,6 +54,7 @@ class PhotoState extends Equatable {
   final bool isSelectionMode;
   final Set<String> selectedPhotoIds;
   final Set<String> downloadingPhotoIds;
+  final PhotoSortOrder sortOrder;
 
   PhotoState copyWith({
     PhotoStatus? status,
@@ -78,6 +80,7 @@ class PhotoState extends Equatable {
     bool? isSelectionMode,
     Set<String>? selectedPhotoIds,
     Set<String>? downloadingPhotoIds,
+    PhotoSortOrder? sortOrder,
   }) {
     return PhotoState(
       status: status ?? this.status,
@@ -104,6 +107,7 @@ class PhotoState extends Equatable {
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
       selectedPhotoIds: selectedPhotoIds ?? this.selectedPhotoIds,
       downloadingPhotoIds: downloadingPhotoIds ?? this.downloadingPhotoIds,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
@@ -133,5 +137,6 @@ class PhotoState extends Equatable {
     isSelectionMode,
     List<String>.from(selectedPhotoIds)..sort(),
     List<String>.from(downloadingPhotoIds)..sort(),
+    sortOrder,
   ];
 }

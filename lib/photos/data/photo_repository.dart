@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'photo.dart';
 import 'photo_api_client.dart';
 import 'photo_local_data_source.dart';
+import 'photo_sort_order.dart';
 
 /// Integrates the remote API and local cache to serve data to the BLoC layer.
 class PhotoRepository {
@@ -18,7 +20,7 @@ class PhotoRepository {
   bool _favoritesLoaded = false;
 
   /// Returns cached content unless [forceRefresh] mandates a new fetch.
-  Future<List<Photo>> fetchPhotos({bool forceRefresh = false}) async {
+  Future<List<Photo>> fetchPhotos({bool forceRefresh = false, PhotoSortOrder? sortOrder}) async {
     await _ensureFavoritesLoaded();
     if (!forceRefresh && _cache != null) {
       return _cache!;
@@ -27,23 +29,28 @@ class PhotoRepository {
     if (!forceRefresh) {
       final localPhotos = await _localDataSource.readPhotos();
       if (localPhotos != null && localPhotos.isNotEmpty) {
-        _cache = _sorted(localPhotos);
+        _cache = sorted(localPhotos, sortOrder ?? PhotoSortOrder.descending);
         return _cache!;
       }
     }
 
     try {
-      final remotePhotos = await _apiClient.fetchPhotos();
+      final remotePhotos = await _apiClient.fetchPhotos().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw Exception('Failed to load photos: Connection timed out');
+        },
+      );
       final persisted = await _localDataSource.savePhotos(
         remotePhotos,
         overwriteExisting: forceRefresh,
       );
-      _cache = _sorted(persisted);
+      _cache = sorted(persisted, sortOrder ?? PhotoSortOrder.descending);
       return _cache!;
     } catch (error, stackTrace) {
       final fallback = await _localDataSource.readPhotos();
       if (fallback != null && fallback.isNotEmpty) {
-        _cache = _sorted(fallback);
+        _cache = sorted(fallback, sortOrder ?? PhotoSortOrder.descending);
         return _cache!;
       }
       Error.throwWithStackTrace(error, stackTrace);
@@ -96,13 +103,17 @@ class PhotoRepository {
     if (!replaced) {
       merged.add(updated);
     }
-    _cache = _sorted(merged);
+    _cache = sorted(merged, PhotoSortOrder.descending); // Maintain default sorting for downloads
     return updated;
   }
 
-  List<Photo> _sorted(List<Photo> source) {
+  List<Photo> sorted(List<Photo> source, PhotoSortOrder sortOrder) {
     final sorted = List<Photo>.of(source)
-      ..sort((a, b) => b.takenAt.compareTo(a.takenAt));
+      ..sort(
+        (a, b) => sortOrder == PhotoSortOrder.ascending
+            ? a.takenAt.compareTo(b.takenAt)
+            : b.takenAt.compareTo(a.takenAt),
+      );
     return List<Photo>.unmodifiable(sorted);
   }
 

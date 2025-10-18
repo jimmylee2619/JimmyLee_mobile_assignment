@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
 import '../data/photo.dart';
 import '../data/photo_repository.dart';
+import '../data/photo_sort_order.dart';
 
 part 'photo_event.dart';
 part 'photo_state.dart';
@@ -27,11 +29,14 @@ class PhotoBloc extends Bloc<PhotoEvent, PhotoState> {
     on<PhotoSelectionToggled>(_onSelectionToggled);
     on<PhotoSelectionCleared>(_onSelectionCleared);
     on<PhotoBatchDownloadRequested>(_onBatchDownloadRequested);
+    on<PhotoSortOrderToggled>(_onSortOrderToggled);
   }
 
-  static const int _pageSize = 5;
+  static const int _pageSize = 6; // Changed from 5 to 6
 
   final PhotoRepository _repository;
+  Completer<void>? _refreshCompleter;
+  Future<void>? get refreshCompleter => _refreshCompleter?.future;
 
   /// Filters photos by keyword and optional location/creator tags.
   List<Photo> _applyFilters(
@@ -98,8 +103,10 @@ class PhotoBloc extends Bloc<PhotoEvent, PhotoState> {
       ),
     );
 
+    _refreshCompleter = Completer<void>(); // Move to here
+
     try {
-      final photos = await _repository.fetchPhotos(forceRefresh: forceRefresh);
+      final photos = await _repository.fetchPhotos(forceRefresh: forceRefresh, sortOrder: state.sortOrder);
       final favorites = await _repository.getFavoriteIds();
       _emitSuccess(
         emit,
@@ -118,6 +125,7 @@ class PhotoBloc extends Bloc<PhotoEvent, PhotoState> {
         ),
       );
     }
+    _refreshCompleter?.complete(); // Also add here
   }
 
   /// Rebuilds filtered results, pagination data, and optional overrides (selection/download state).
@@ -137,6 +145,8 @@ class PhotoBloc extends Bloc<PhotoEvent, PhotoState> {
     Set<String>? downloadingOverride,
     String? infoMessage,
     String? errorMessage,
+    PhotoSortOrder? sortOrder,
+    List<Photo>? filteredFavoritePhotos, // Add this line
   }) {
     final keyword = searchQuery ?? state.searchQuery;
     final locations = selectedLocations ?? state.selectedLocations;
@@ -210,7 +220,29 @@ class PhotoBloc extends Bloc<PhotoEvent, PhotoState> {
         errorMessage: errorMessage ?? state.errorMessage,
         clearInfoMessage: infoMessage == null,
         infoMessage: infoMessage ?? state.infoMessage,
+        sortOrder: sortOrder ?? state.sortOrder,
       ),
+    );
+  }
+
+  void _onSortOrderToggled(
+    PhotoSortOrderToggled event,
+    Emitter<PhotoState> emit,
+  ) {
+    final nextSortOrder = state.sortOrder == PhotoSortOrder.ascending
+        ? PhotoSortOrder.descending
+        : PhotoSortOrder.ascending;
+
+    final sortedAllPhotos = _repository.sorted(state.allPhotos, nextSortOrder);
+    final sortedFavoritePhotos = _repository.sorted(state.filteredFavoritePhotos, nextSortOrder);
+
+    _emitSuccess(
+      emit,
+      allPhotos: sortedAllPhotos,
+      favoriteIds: state.favoriteIds,
+      sortOrder: nextSortOrder,
+      resetPagination: true,
+      filteredFavoritePhotos: sortedFavoritePhotos,
     );
   }
 

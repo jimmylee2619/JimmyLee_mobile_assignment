@@ -8,6 +8,7 @@ import 'package:network_image_mock/network_image_mock.dart';
 import 'package:photo_gallery/photos/bloc/photo_bloc.dart';
 import 'package:photo_gallery/photos/data/photo.dart';
 import 'package:photo_gallery/photos/data/photo_repository.dart';
+import 'package:photo_gallery/photos/data/photo_sort_order.dart';
 import 'package:photo_gallery/photos/view/photo_page.dart';
 import 'package:photo_gallery/photos/widgets/photo_list_tile.dart';
 
@@ -55,9 +56,12 @@ void main() {
       );
     }
 
-    void stubFetchPhotos(List<Photo> data) {
+    void stubFetchPhotos(List<Photo> data, {PhotoSortOrder? sortOrder}) {
       when(
-        () => repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+        () => repository.fetchPhotos(
+          forceRefresh: any(named: 'forceRefresh'),
+          sortOrder: sortOrder,
+        ),
       ).thenAnswer((_) async => data);
     }
 
@@ -70,13 +74,13 @@ void main() {
     testWidgets(
       'renders search field, layout toggle, filter button, and tiles after load',
       (tester) async {
-        stubFetchPhotos(photos);
+        stubFetchPhotos(photos, sortOrder: PhotoSortOrder.descending);
         stubFavoriteIds(const {});
 
         await mockNetworkImagesFor(() async {
           await tester.pumpWidget(buildSubject());
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpAndSettle();
+          await Future.delayed(const Duration(milliseconds: 500));
 
           expect(find.byType(TextField), findsOneWidget);
           expect(
@@ -84,6 +88,8 @@ void main() {
             findsOneWidget,
           );
           expect(find.byIcon(Icons.tune), findsOneWidget);
+          expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
+          expect(find.byIcon(Icons.arrow_upward), findsNothing);
 
           final galleryContext = tester.element(find.byType(PhotoGalleryView));
           final bloc = galleryContext.read<PhotoBloc>();
@@ -91,16 +97,16 @@ void main() {
           expect(find.byType(PhotoListTile), findsWidgets);
 
           await tester.tap(find.byIcon(Icons.tune));
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpAndSettle();
+          await Future.delayed(const Duration(milliseconds: 500));
 
           expect(find.text('Filter options'), findsOneWidget);
           expect(find.text('Clear'), findsOneWidget);
           expect(find.text('Done'), findsOneWidget);
 
           await tester.tap(find.text('Done'));
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpAndSettle();
+          await Future.delayed(const Duration(milliseconds: 500));
         });
       },
     );
@@ -108,13 +114,13 @@ void main() {
     testWidgets('shows empty placeholder when repository returns no photos', (
       tester,
     ) async {
-      stubFetchPhotos(const []);
+      stubFetchPhotos(const [], sortOrder: PhotoSortOrder.descending);
       stubFavoriteIds(const {});
 
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(buildSubject());
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpAndSettle();
+        await Future.delayed(const Duration(milliseconds: 500));
 
         expect(
           find.text('No photos match the current filters.'),
@@ -124,18 +130,82 @@ void main() {
       });
     });
 
+    testWidgets(
+      'tapping sort button toggles order and changes icon',
+      (tester) async {
+        when(
+          () => repository.fetchPhotos(
+            forceRefresh: any(named: 'forceRefresh'),
+            sortOrder: PhotoSortOrder.descending,
+          ),
+        ).thenAnswer((_) async => photos.reversed.toList());
+        when(
+          () => repository.fetchPhotos(
+            forceRefresh: any(named: 'forceRefresh'),
+            sortOrder: PhotoSortOrder.ascending,
+          ),
+        ).thenAnswer((_) async => photos);
+        stubFavoriteIds(const {});
+
+        await mockNetworkImagesFor(() async {
+          await tester.pumpWidget(buildSubject());
+          await tester.pumpAndSettle();
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          // Initially descending
+          expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
+          expect(find.byIcon(Icons.arrow_upward), findsNothing);
+
+          // Tap to switch to ascending
+          await tester.tap(find.byIcon(Icons.arrow_downward));
+          await tester.pumpAndSettle();
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          expect(find.byIcon(Icons.arrow_upward), findsOneWidget);
+          expect(find.byIcon(Icons.arrow_downward), findsNothing);
+
+          // Tap to switch back to descending
+          await tester.tap(find.byIcon(Icons.arrow_upward));
+          await tester.pumpAndSettle();
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          expect(find.byIcon(Icons.arrow_downward), findsOneWidget);
+          expect(find.byIcon(Icons.arrow_upward), findsNothing);
+        });
+
+        verify(
+          () => repository.fetchPhotos(
+            forceRefresh: false,
+            sortOrder: PhotoSortOrder.descending,
+          ),
+        ).called(1);
+        verify(
+          () => repository.fetchPhotos(
+            forceRefresh: true,
+            sortOrder: PhotoSortOrder.ascending,
+          ),
+        ).called(1);
+        verify(
+          () => repository.fetchPhotos(
+            forceRefresh: true,
+            sortOrder: PhotoSortOrder.descending,
+          ),
+        ).called(1);
+      },
+    );
+
     testWidgets('filters photos based on search query', (tester) async {
-      stubFetchPhotos(photos);
+      stubFetchPhotos(photos, sortOrder: PhotoSortOrder.descending);
       stubFavoriteIds(const {});
 
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(buildSubject());
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpAndSettle();
+        await Future.delayed(const Duration(milliseconds: 500));
 
         await tester.enterText(find.byType(TextField), 'Photo 1');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpAndSettle();
+        await Future.delayed(const Duration(milliseconds: 500));
 
         expect(
           find.descendant(
@@ -152,17 +222,17 @@ void main() {
     testWidgets(
       'long press enters selection mode and exposes batch download action',
       (tester) async {
-        stubFetchPhotos(photos);
+        stubFetchPhotos(photos, sortOrder: PhotoSortOrder.descending);
         stubFavoriteIds(const {});
 
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(buildSubject());
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpAndSettle();
+        await Future.delayed(const Duration(milliseconds: 500));
 
           await tester.longPress(find.byType(PhotoListTile).first);
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpAndSettle();
+          await Future.delayed(const Duration(milliseconds: 500));
 
           expect(find.text('Selected 1 item'), findsOneWidget);
           final downloadAction = tester.widget<IconButton>(
@@ -176,17 +246,17 @@ void main() {
     testWidgets('switching to masonry layout renders a staggered grid', (
       tester,
     ) async {
-      stubFetchPhotos(photos);
+      stubFetchPhotos(photos, sortOrder: PhotoSortOrder.descending);
       stubFavoriteIds(const {});
 
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(buildSubject());
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpAndSettle();
+        await Future.delayed(const Duration(milliseconds: 500));
 
         await tester.tap(find.text('Masonry'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpAndSettle();
+        await Future.delayed(const Duration(milliseconds: 500));
 
         expect(find.byType(SliverMasonryGrid), findsOneWidget);
       });

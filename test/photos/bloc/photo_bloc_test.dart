@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:photo_gallery/photos/bloc/photo_bloc.dart';
 import 'package:photo_gallery/photos/data/photo.dart';
 import 'package:photo_gallery/photos/data/photo_repository.dart';
+import 'package:photo_gallery/photos/data/photo_sort_order.dart';
 
 class _MockPhotoRepository extends Mock implements PhotoRepository {}
 
@@ -57,7 +58,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -76,10 +77,11 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
       verify: (_) {
-        verify(() => repository.fetchPhotos(forceRefresh: false)).called(1);
+        verify(() => repository.fetchPhotos(forceRefresh: false, sortOrder: PhotoSortOrder.descending)).called(1);
       },
     );
 
@@ -88,7 +90,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -111,6 +113,7 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.loading,
@@ -120,6 +123,7 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -129,11 +133,12 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
       verify: (_) {
-        verify(() => repository.fetchPhotos(forceRefresh: false)).called(1);
-        verify(() => repository.fetchPhotos(forceRefresh: true)).called(1);
+        verify(() => repository.fetchPhotos(forceRefresh: false, sortOrder: PhotoSortOrder.descending)).called(1);
+        verify(() => repository.fetchPhotos(forceRefresh: true, sortOrder: PhotoSortOrder.descending)).called(1);
       },
     );
 
@@ -142,7 +147,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenThrow(Exception('network failure'));
         when(
           () => repository.getFavoriteIds(),
@@ -156,6 +161,7 @@ void main() {
             PhotoState(
               status: PhotoStatus.failure,
               errorMessage: 'Exception: network failure',
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );
@@ -165,7 +171,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto, secondPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -188,6 +194,7 @@ void main() {
               displayPhotos: [firstPhoto, secondPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -198,6 +205,7 @@ void main() {
               displayPhotos: [secondPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );
@@ -207,7 +215,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -230,6 +238,7 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -240,6 +249,7 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );
@@ -249,7 +259,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto, thirdPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -272,6 +282,7 @@ void main() {
               displayPhotos: [firstPhoto, thirdPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -282,6 +293,7 @@ void main() {
               displayPhotos: [firstPhoto, thirdPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );
@@ -291,7 +303,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto, secondPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -314,6 +326,7 @@ void main() {
               displayPhotos: [firstPhoto, secondPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -324,6 +337,7 @@ void main() {
               displayPhotos: [secondPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );
@@ -333,7 +347,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -359,6 +373,7 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -371,6 +386,7 @@ void main() {
               totalPages: 1,
               currentPage: 0,
               favoriteTotalPages: 1,
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );
@@ -383,7 +399,7 @@ void main() {
         );
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -412,6 +428,7 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -422,6 +439,7 @@ void main() {
               totalPages: 1,
               currentPage: 0,
               downloadingPhotoIds: {'1'},
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -436,6 +454,7 @@ void main() {
               totalPages: 1,
               currentPage: 0,
               infoMessage: 'Saved to /tmp/photo.jpg',
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );
@@ -445,7 +464,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -474,6 +493,7 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -484,6 +504,7 @@ void main() {
               totalPages: 1,
               currentPage: 0,
               downloadingPhotoIds: {'1'},
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -494,8 +515,74 @@ void main() {
               totalPages: 1,
               currentPage: 0,
               errorMessage: 'Exception: disk full',
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
+    );
+
+    blocTest<PhotoBloc, PhotoState>(
+      'toggles sort order and reloads photos',
+      build: () {
+        when(
+          () =>
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: PhotoSortOrder.descending),
+        ).thenAnswer((_) async => [thirdPhoto, secondPhoto, firstPhoto]);
+        when(
+          () =>
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: PhotoSortOrder.ascending),
+        ).thenAnswer((_) async => [firstPhoto, secondPhoto, thirdPhoto]);
+        when(
+          () => repository.getFavoriteIds(),
+        ).thenAnswer((_) async => <String>{});
+        return PhotoBloc(repository: repository);
+      },
+      act: (bloc) async {
+        bloc.add(const PhotoRequested());
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const PhotoSortOrderToggled());
+      },
+      expect:
+          () => [
+            const PhotoState(status: PhotoStatus.loading),
+            PhotoState(
+              status: PhotoStatus.success,
+              allPhotos: [thirdPhoto, secondPhoto, firstPhoto],
+              photos: [thirdPhoto, secondPhoto, firstPhoto],
+              favoriteIds: const <String>{},
+              displayPhotos: [thirdPhoto, secondPhoto, firstPhoto],
+              totalPages: 1,
+              currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
+            ),
+            PhotoState(
+              status: PhotoStatus.loading,
+              allPhotos: [thirdPhoto, secondPhoto, firstPhoto],
+              photos: [thirdPhoto, secondPhoto, firstPhoto],
+              favoriteIds: const <String>{},
+              displayPhotos: [thirdPhoto, secondPhoto, firstPhoto],
+              totalPages: 1,
+              currentPage: 0,
+              sortOrder: PhotoSortOrder.ascending,
+            ),
+            PhotoState(
+              status: PhotoStatus.success,
+              allPhotos: [firstPhoto, secondPhoto, thirdPhoto],
+              photos: [firstPhoto, secondPhoto, thirdPhoto],
+              favoriteIds: const <String>{},
+              displayPhotos: [firstPhoto, secondPhoto, thirdPhoto],
+              totalPages: 1,
+              currentPage: 0,
+              sortOrder: PhotoSortOrder.ascending,
+            ),
+          ],
+      verify: (_) {
+        verify(
+          () => repository.fetchPhotos(forceRefresh: false, sortOrder: PhotoSortOrder.descending),
+        ).called(1);
+        verify(
+          () => repository.fetchPhotos(forceRefresh: true, sortOrder: PhotoSortOrder.ascending),
+        ).called(1);
+      },
     );
 
     blocTest<PhotoBloc, PhotoState>(
@@ -503,7 +590,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -526,6 +613,7 @@ void main() {
               displayPhotos: [firstPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -536,6 +624,7 @@ void main() {
               totalPages: 1,
               currentPage: 0,
               layoutMode: GalleryLayoutMode.masonry,
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );
@@ -545,7 +634,7 @@ void main() {
       build: () {
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto, secondPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -570,6 +659,7 @@ void main() {
               displayPhotos: [firstPhoto, secondPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -581,6 +671,7 @@ void main() {
               currentPage: 0,
               isSelectionMode: true,
               selectedPhotoIds: {'1'},
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -592,6 +683,7 @@ void main() {
               currentPage: 0,
               isSelectionMode: true,
               selectedPhotoIds: {'1', '2'},
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -601,6 +693,7 @@ void main() {
               displayPhotos: [firstPhoto, secondPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );
@@ -616,7 +709,7 @@ void main() {
         );
         when(
           () =>
-              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh')),
+              repository.fetchPhotos(forceRefresh: any(named: 'forceRefresh'), sortOrder: any(named: 'sortOrder')),
         ).thenAnswer((_) async => [firstPhoto, secondPhoto]);
         when(
           () => repository.getFavoriteIds(),
@@ -651,6 +744,7 @@ void main() {
               displayPhotos: [firstPhoto, secondPhoto],
               totalPages: 1,
               currentPage: 0,
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -662,6 +756,7 @@ void main() {
               currentPage: 0,
               isSelectionMode: true,
               selectedPhotoIds: {'1'},
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -673,6 +768,7 @@ void main() {
               currentPage: 0,
               isSelectionMode: true,
               selectedPhotoIds: {'1', '2'},
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -685,6 +781,7 @@ void main() {
               isSelectionMode: true,
               selectedPhotoIds: {'1', '2'},
               downloadingPhotoIds: {'1', '2'},
+              sortOrder: PhotoSortOrder.descending,
             ),
             PhotoState(
               status: PhotoStatus.success,
@@ -704,6 +801,7 @@ void main() {
               totalPages: 1,
               currentPage: 0,
               infoMessage: 'Downloaded 2 items.',
+              sortOrder: PhotoSortOrder.descending,
             ),
           ],
     );

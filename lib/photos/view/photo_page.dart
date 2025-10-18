@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/photo_bloc.dart';
 import '../data/photo.dart';
 import '../data/photo_repository.dart';
+import '../data/photo_sort_order.dart';
 import '../../app_constants.dart';
 import '../widgets/pagination_controls.dart';
 import '../widgets/photo_collection_view.dart';
@@ -205,9 +207,12 @@ class PhotoGalleryView extends StatefulWidget {
   State<PhotoGalleryView> createState() => _PhotoGalleryViewState();
 }
 
-class _PhotoGalleryViewState extends State<PhotoGalleryView> {
+class _PhotoGalleryViewState extends State<PhotoGalleryView> with AutomaticKeepAliveClientMixin {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -250,6 +255,7 @@ class _PhotoGalleryViewState extends State<PhotoGalleryView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return BlocListener<PhotoBloc, PhotoState>(
       listenWhen:
           (previous, current) => previous.searchQuery != current.searchQuery,
@@ -262,18 +268,29 @@ class _PhotoGalleryViewState extends State<PhotoGalleryView> {
             );
         }
       },
-      child: BlocBuilder<PhotoBloc, PhotoState>(
-        builder: (context, state) {
-          switch (state.status) {
-            case PhotoStatus.initial:
-            case PhotoStatus.loading:
-              return const _LoadingIndicator();
-            case PhotoStatus.failure:
-              return _ErrorView(message: state.errorMessage);
-            case PhotoStatus.success:
-              return _buildSuccessContent(context, state);
+      child: BlocListener<PhotoBloc, PhotoState>( // Nested BlocListener for precaching
+        listenWhen: (previous, current) =>
+            previous.displayPhotos != current.displayPhotos,
+        listener: (context, state) {
+          for (final photo in state.displayPhotos) {
+            if (photo.localImagePath != null) {
+              precacheImage(FileImage(File(photo.localImagePath!)), context);
+            }
           }
         },
+        child: BlocBuilder<PhotoBloc, PhotoState>(
+          builder: (context, state) {
+            switch (state.status) {
+              case PhotoStatus.initial:
+              case PhotoStatus.loading:
+                return const _LoadingIndicator();
+              case PhotoStatus.failure:
+                return _ErrorView(message: state.errorMessage);
+              case PhotoStatus.success:
+                return _buildSuccessContent(context, state);
+            }
+          },
+        ),
       ),
     );
   }
@@ -296,6 +313,7 @@ class _PhotoGalleryViewState extends State<PhotoGalleryView> {
       onPhotoSelectionToggle: (photo) => _handleSelectionToggle(bloc, photo),
       onRefresh: () async {
         bloc.add(const PhotoRefreshed());
+        await bloc.refreshCompleter; // Use the public getter
       },
       emptyPlaceholder: const _EmptyView(
         message: 'No photos match the current filters.',
@@ -305,18 +323,35 @@ class _PhotoGalleryViewState extends State<PhotoGalleryView> {
 
   /// Assembles search, filters, and pagination controls for the header.
   List<Widget> _buildHeaderWidgets(PhotoState state, PhotoBloc bloc) {
-    final widgets = <Widget>[
-      LayoutModeToggle(
-        layoutMode: state.layoutMode,
-        onChanged: (mode) => bloc.add(PhotoLayoutModeChanged(mode)),
+    final widgets = <Widget>[];
+    widgets.add(
+      Row(
+        children: [
+          LayoutModeToggle(
+            layoutMode: state.layoutMode,
+            onChanged: (mode) => bloc.add(PhotoLayoutModeChanged(mode)),
+          ),
+          const Spacer(),
+          IconButton(
+            tooltip: 'Toggle sort order',
+            icon: Icon(
+              state.sortOrder == PhotoSortOrder.ascending
+                  ? Icons.arrow_upward
+                  : Icons.arrow_downward,
+            ),
+            onPressed: () => bloc.add(const PhotoSortOrderToggled()),
+          ),
+        ],
       ),
+    );
+    widgets.add(
       _SearchField(
         controller: _controller,
         focusNode: _focusNode,
         hintText: 'Search by description, location, or creator',
         onSubmitted: _onSearchSubmitted,
       ),
-    ];
+    );
 
     if (_focusNode.hasFocus && state.recentSearches.isNotEmpty) {
       widgets.add(
@@ -429,9 +464,12 @@ class PhotoFavoritesView extends StatefulWidget {
   State<PhotoFavoritesView> createState() => _PhotoFavoritesViewState();
 }
 
-class _PhotoFavoritesViewState extends State<PhotoFavoritesView> {
+class _PhotoFavoritesViewState extends State<PhotoFavoritesView> with AutomaticKeepAliveClientMixin {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -474,6 +512,7 @@ class _PhotoFavoritesViewState extends State<PhotoFavoritesView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return BlocListener<PhotoBloc, PhotoState>(
       listenWhen:
           (previous, current) => previous.searchQuery != current.searchQuery,
@@ -486,18 +525,29 @@ class _PhotoFavoritesViewState extends State<PhotoFavoritesView> {
             );
         }
       },
-      child: BlocBuilder<PhotoBloc, PhotoState>(
-        builder: (context, state) {
-          switch (state.status) {
-            case PhotoStatus.initial:
-            case PhotoStatus.loading:
-              return const _LoadingIndicator();
-            case PhotoStatus.failure:
-              return _ErrorView(message: state.errorMessage);
-            case PhotoStatus.success:
-              return _buildSuccessContent(context, state);
+      child: BlocListener<PhotoBloc, PhotoState>( // Nested BlocListener for precaching
+        listenWhen: (previous, current) =>
+            previous.favoriteDisplayPhotos != current.favoriteDisplayPhotos,
+        listener: (context, state) {
+          for (final photo in state.favoriteDisplayPhotos) {
+            if (photo.localImagePath != null) {
+              precacheImage(FileImage(File(photo.localImagePath!)), context);
+            }
           }
         },
+        child: BlocBuilder<PhotoBloc, PhotoState>(
+          builder: (context, state) {
+            switch (state.status) {
+              case PhotoStatus.initial:
+              case PhotoStatus.loading:
+                return const _LoadingIndicator();
+              case PhotoStatus.failure:
+                return _ErrorView(message: state.errorMessage);
+              case PhotoStatus.success:
+                return _buildSuccessContent(context, state);
+            }
+          },
+        ),
       ),
     );
   }

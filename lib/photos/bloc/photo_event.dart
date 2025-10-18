@@ -106,6 +106,14 @@ class PhotoFavoritePageNumberChanged extends PhotoEvent {
   List<Object?> get props => [pageNumber];
 }
 
+/// Event to toggle the photo sorting order (ascending/descending).
+class PhotoSortOrderToggled extends PhotoEvent {
+  const PhotoSortOrderToggled();
+
+  @override
+  List<Object?> get props => [];
+}
+
 /// Switches between list and masonry layout modes.
 class PhotoLayoutModeChanged extends PhotoEvent {
   const PhotoLayoutModeChanged(this.mode);
