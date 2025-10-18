@@ -325,13 +325,35 @@ class _PhotoGalleryViewState extends State<PhotoGalleryView> with AutomaticKeepA
   List<Widget> _buildHeaderWidgets(PhotoState state, PhotoBloc bloc) {
     final widgets = <Widget>[];
     widgets.add(
+      SizedBox(
+        width: double.infinity,
+        child: LayoutModeToggle(
+          layoutMode: state.layoutMode,
+          onChanged: (mode) => bloc.add(PhotoLayoutModeChanged(mode)),
+        ),
+      ),
+    );
+    widgets.add(
+      _SearchField(
+        controller: _controller,
+        focusNode: _focusNode,
+        hintText: 'Search by description, location, or creator',
+        onSubmitted: _onSearchSubmitted,
+      ),
+    );
+        widgets.add(
       Row(
         children: [
-          LayoutModeToggle(
-            layoutMode: state.layoutMode,
-            onChanged: (mode) => bloc.add(PhotoLayoutModeChanged(mode)),
-          ),
           const Spacer(),
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacingSmall),
+            child: Text(
+              state.sortOrder == PhotoSortOrder.ascending
+                  ? 'Date Ascending'
+                  : 'Date Descending',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
           IconButton(
             tooltip: 'Toggle sort order',
             icon: Icon(
@@ -342,14 +364,6 @@ class _PhotoGalleryViewState extends State<PhotoGalleryView> with AutomaticKeepA
             onPressed: () => bloc.add(const PhotoSortOrderToggled()),
           ),
         ],
-      ),
-    );
-    widgets.add(
-      _SearchField(
-        controller: _controller,
-        focusNode: _focusNode,
-        hintText: 'Search by description, location, or creator',
-        onSubmitted: _onSearchSubmitted,
       ),
     );
 
@@ -592,6 +606,31 @@ class _PhotoFavoritesViewState extends State<PhotoFavoritesView> with AutomaticK
         onSubmitted: _onSearchSubmitted,
       ),
     ];
+        widgets.add(
+      Row(
+        children: [
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacingSmall),
+            child: Text(
+              state.sortOrder == PhotoSortOrder.ascending
+                  ? 'Date Ascending'
+                  : 'Date Descending',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Toggle sort order',
+            icon: Icon(
+              state.sortOrder == PhotoSortOrder.ascending
+                  ? Icons.arrow_upward
+                  : Icons.arrow_downward,
+            ),
+            onPressed: () => bloc.add(const PhotoSortOrderToggled()),
+          ),
+        ],
+      ),
+    );
 
     if (_focusNode.hasFocus && state.recentSearches.isNotEmpty) {
       widgets.add(

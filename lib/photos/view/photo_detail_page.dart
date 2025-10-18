@@ -42,141 +42,145 @@ class PhotoDetailPage extends StatelessWidget {
           final isDownloading = state.downloadingPhotoIds.contains(latest.id);
           return Scaffold(
             appBar: AppBar(title: const Text('Photo details')),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacingLarge),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: AppBorderRadius,
-                    child: GestureDetector(
-                      onTap: () => _showImagePreview(context, latest),
-                      child: Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          AspectRatio(
-                            aspectRatio: 4 / 3,
-                            child: _buildImage(latest),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(AppSpacingMedium),
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: AppBorderRadius,
-                              ),
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: AppSpacingMedium,
-                                  vertical: AppSpacingXSmall,
+            body: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacingLarge),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: AppBorderRadius,
+                      child: GestureDetector(
+                        onTap: () => _showImagePreview(context, latest),
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            AspectRatio(
+                              aspectRatio: 4 / 3,
+                              child: _buildImage(latest),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(AppSpacingMedium),
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: AppBorderRadius,
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.fullscreen,
-                                      size: AppIconSizeSmall,
-                                      color: Colors.white,
-                                    ),
-                                    SizedBox(width: AppSpacingXSmall),
-                                    Text(
-                                      'Tap to open preview',
-                                      style: TextStyle(
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: AppSpacingMedium,
+                                    vertical: AppSpacingXSmall,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.fullscreen,
+                                        size: AppIconSizeSmall,
                                         color: Colors.white,
-                                        fontSize: AppFontSizeSmall,
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(width: AppSpacingXSmall),
+                                      Text(
+                                        'Tap to open preview',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: AppFontSizeSmall,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacingExtraLarge),
-                  Text(
-                    latest.description,
-                    style: theme.textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: AppSpacingLarge),
-                  _DetailItem(
-                    icon: Icons.place,
-                    label: 'Location',
-                    value: latest.location,
-                  ),
-                  _DetailItem(
-                    icon: Icons.person,
-                    label: 'Creator',
-                    value: latest.createdBy,
-                  ),
-                  _DetailItem(
-                    icon: Icons.calendar_month,
-                    label: 'Captured on',
-                    value: _formatDateTime(latest.takenAt),
-                  ),
-                  _DetailItem(
-                    icon: Icons.upload,
-                    label: 'Uploaded on',
-                    value: _formatDateTime(latest.createdAt),
-                  ),
-                  const SizedBox(height: AppSpacingExtraLarge),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: FilledButton.icon(
-                          onPressed: isDownloading
-                              ? null
-                              : () {
-                                  context.read<PhotoBloc>().add(
-                                    PhotoDownloadRequested(latest),
-                                  );
-                                },
-                          icon: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 180),
-                            child: isDownloading
-                                ? const SizedBox(
-                                    key: ValueKey('downloadSpinner'),
-                                    height: AppIconSizeMedium,
-                                    width: AppIconSizeMedium,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: AppStrokeWidthSmall,
+                    const SizedBox(height: AppSpacingExtraLarge),
+                    Text(
+                      latest.description,
+                      style: theme.textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: AppSpacingLarge),
+                    _DetailItem(
+                      icon: Icons.place,
+                      label: 'Location',
+                      value: latest.location,
+                    ),
+                    _DetailItem(
+                      icon: Icons.person,
+                      label: 'Creator',
+                      value: latest.createdBy,
+                    ),
+                    _DetailItem(
+                      icon: Icons.calendar_month,
+                      label: 'Captured on',
+                      value: _formatDateTime(latest.takenAt),
+                    ),
+                    _DetailItem(
+                      icon: Icons.upload,
+                      label: 'Uploaded on',
+                      value: _formatDateTime(latest.createdAt),
+                    ),
+                    const SizedBox(height: AppSpacingExtraLarge),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: FilledButton.icon(
+                            onPressed: isDownloading
+                                ? null
+                                : () {
+                                    context.read<PhotoBloc>().add(
+                                      PhotoDownloadRequested(latest),
+                                    );
+                                  },
+                            icon: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 180),
+                              child: isDownloading
+                                  ? const SizedBox(
+                                      key: ValueKey('downloadSpinner'),
+                                      height: AppIconSizeMedium,
+                                      width: AppIconSizeMedium,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: AppStrokeWidthSmall,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.download,
+                                      key: ValueKey('downloadIcon'),
                                     ),
-                                  )
-                                : const Icon(
-                                    Icons.download,
-                                    key: ValueKey('downloadIcon'),
-                                  ),
-                          ),
-                          label: Text(
-                            isDownloading ? 'Downloading...' : 'Download image',
+                            ),
+                            label: Text(
+                              isDownloading ? 'Downloading...' : 'Download image',
+                              style: const TextStyle(fontSize: AppFontSizeSmall),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: AppSpacingMedium),
-                      Expanded(
-                        flex: 1,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            context.read<PhotoBloc>().add(
-                              PhotoFavoriteToggled(latest.id),
-                            );
-                          },
-                          icon: Icon(
-                            isFavorite ? Icons.favorite : Icons.favorite_border,
-                          ),
-                          label: Text(
-                            isFavorite
-                                ? 'Remove favorites'
-                                : 'Add to favorites',
+                        const SizedBox(width: AppSpacingSmall),
+                        Expanded(
+                          flex: 1,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              context.read<PhotoBloc>().add(
+                                PhotoFavoriteToggled(latest.id),
+                              );
+                            },
+                            icon: Icon(
+                              isFavorite ? Icons.favorite : Icons.favorite_border,
+                            ),
+                            label: Text(
+                              isFavorite
+                                  ? 'Remove favorites'
+                                  : 'Add to favorites',
+                              style: const TextStyle(fontSize: AppFontSizeSmall),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );

@@ -1,12 +1,13 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../data/photo.dart';
 import '../../app_constants.dart';
 
 /// Renders a photo summary card and optionally exposes selection affordances.
-class PhotoListTile extends StatelessWidget {
+class PhotoListTile extends StatefulWidget {
   const PhotoListTile({
     super.key,
     required this.photo,
@@ -31,13 +32,25 @@ class PhotoListTile extends StatelessWidget {
   final bool isDownloading;
 
   @override
+  State<PhotoListTile> createState() => _PhotoListTileState();
+}
+
+class _PhotoListTileState extends State<PhotoListTile>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
-    final bool isTileDisabled = isDownloading;
-    final effectiveOnTap =
-        isTileDisabled
-            ? null
-            : (isSelectionMode ? (onSelectionToggle ?? onTap) : onTap);
-    final effectiveOnLongPress = isTileDisabled ? null : onLongPress;
+    super.build(context);
+
+    final bool isTileDisabled = widget.isDownloading;
+    final effectiveOnTap = isTileDisabled
+        ? null
+        : (widget.isSelectionMode
+            ? (widget.onSelectionToggle ?? widget.onTap)
+            : widget.onTap);
+    final effectiveOnLongPress = isTileDisabled ? null : widget.onLongPress;
     final theme = Theme.of(context);
 
     return Card(
@@ -55,17 +68,16 @@ class PhotoListTile extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   _buildImage(),
-                  if (isSelectionMode)
+                  if (widget.isSelectionMode)
                     Positioned.fill(
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 160),
-                        color:
-                            isSelected
-                                ? Colors.black.withOpacity(0.35)
-                                : Colors.black.withOpacity(0.15),
+                        color: widget.isSelected
+                            ? Colors.black.withOpacity(0.35)
+                            : Colors.black.withOpacity(0.15),
                       ),
                     ),
-                  if (isDownloading)
+                  if (widget.isDownloading)
                     const Positioned.fill(
                       // Blocks taps and surfaces feedback while the download is in flight.
                       child: ColoredBox(
@@ -79,20 +91,21 @@ class PhotoListTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (isSelectionMode)
+                  if (widget.isSelectionMode)
                     Positioned(
                       top: AppSpacingSmall,
                       right: AppSpacingSmall,
                       child: CircleAvatar(
                         radius: AppCircleAvatarRadius,
-                        backgroundColor:
-                            isSelected
-                                ? theme.colorScheme.primary
-                                : Colors.white,
+                        backgroundColor: widget.isSelected
+                            ? theme.colorScheme.primary
+                            : Colors.white,
                         foregroundColor:
-                            isSelected ? Colors.white : Colors.black54,
+                            widget.isSelected ? Colors.white : Colors.black54,
                         child: Icon(
-                          isSelected ? Icons.check : Icons.circle_outlined,
+                          widget.isSelected
+                              ? Icons.check
+                              : Icons.circle_outlined,
                         ),
                       ),
                     )
@@ -107,14 +120,15 @@ class PhotoListTile extends StatelessWidget {
                           iconSize: AppIconSizeMedium,
                           splashRadius: AppSplashRadius,
                           icon: Icon(
-                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            widget.isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
                             color: Colors.white,
                           ),
-                          onPressed: onFavoritePressed,
-                          tooltip:
-                              isFavorite
-                                  ? 'Remove favorites'
-                                  : 'Add to favorites',
+                          onPressed: widget.onFavoritePressed,
+                          tooltip: widget.isFavorite
+                              ? 'Remove favorites'
+                              : 'Add to favorites',
                         ),
                       ),
                     ),
@@ -126,13 +140,14 @@ class PhotoListTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(photo.description, style: theme.textTheme.titleMedium),
+                  Text(widget.photo.description,
+                      style: theme.textTheme.titleMedium),
                   const SizedBox(height: AppSpacingSmall),
                   Row(
                     children: [
                       const Icon(Icons.place, size: AppIconSizeSmall),
                       const SizedBox(width: AppSpacingExtraSmall),
-                      Expanded(child: Text(photo.location)),
+                      Expanded(child: Text(widget.photo.location)),
                     ],
                   ),
                   const SizedBox(height: AppSpacingExtraSmall),
@@ -140,7 +155,7 @@ class PhotoListTile extends StatelessWidget {
                     children: [
                       const Icon(Icons.person, size: AppIconSizeSmall),
                       const SizedBox(width: AppSpacingExtraSmall),
-                      Expanded(child: Text(photo.createdBy)),
+                      Expanded(child: Text(widget.photo.createdBy)),
                     ],
                   ),
                   const SizedBox(height: AppSpacingExtraSmall),
@@ -148,7 +163,7 @@ class PhotoListTile extends StatelessWidget {
                     children: [
                       const Icon(Icons.camera_alt, size: AppIconSizeSmall),
                       const SizedBox(width: AppSpacingExtraSmall),
-                      Text(_formatDate(photo.takenAt)),
+                      Text(_formatDate(widget.photo.takenAt)),
                     ],
                   ),
                 ],
@@ -166,44 +181,27 @@ class PhotoListTile extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    final localPath = photo.localImagePath;
-    final ImageProvider imageProvider;
-
+    final localPath = widget.photo.localImagePath;
     if (localPath != null && File(localPath).existsSync()) {
-      imageProvider = FileImage(File(localPath));
-    } else {
-      imageProvider = NetworkImage(photo.url);
+      return Image.file(
+        File(localPath),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _errorPlaceholder(),
+      );
     }
 
-    return Image( // Use Image.file or Image.network with loadingBuilder
-      image: imageProvider,
+    return CachedNetworkImage(
+      imageUrl: widget.photo.url,
       fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => _errorPlaceholder(),
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
-          return child;
-        }
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            child, // Show the image beneath the loading indicator
-            Center(
-              child: SizedBox(
-                height: AppCircularProgressIndicatorSize,
-                width: AppCircularProgressIndicatorSize,
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                      : null,
-                  strokeWidth: AppStrokeWidthMedium,
-                  color: Colors.white,
-                  backgroundColor: Colors.black54,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+      placeholder: (context, url) => const Center(
+        child: SizedBox(
+          height: AppCircularProgressIndicatorSize,
+          width: AppCircularProgressIndicatorSize,
+          child:
+              CircularProgressIndicator(strokeWidth: AppStrokeWidthMedium),
+        ),
+      ),
+      errorWidget: (context, url, error) => _errorPlaceholder(),
     );
   }
 
