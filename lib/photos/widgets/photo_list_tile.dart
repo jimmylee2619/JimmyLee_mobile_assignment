@@ -73,8 +73,8 @@ class _PhotoListTileState extends State<PhotoListTile>
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 160),
                         color: widget.isSelected
-                            ? Colors.black.withOpacity(0.35)
-                            : Colors.black.withOpacity(0.15),
+                            ? Colors.black.withAlpha((255 * 0.35).round())
+                            : Colors.black.withAlpha((255 * 0.15).round()),
                       ),
                     ),
                   if (widget.isDownloading)
